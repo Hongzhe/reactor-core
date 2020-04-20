@@ -38,6 +38,7 @@ import reactor.util.function.Tuple8;
 import reactor.util.function.Tuples;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.core.Scannable.*;
 
 public class MonoZipTest {
 
@@ -515,7 +516,8 @@ public class MonoZipTest {
 	@Test
 	public void scanOperator() {
 		MonoZip s = new MonoZip<>(true, z -> z);
-		assertThat(s.scan(Scannable.Attr.DELAY_ERROR)).as("delayError").isTrue();
+		assertThat(s.scan(Attr.DELAY_ERROR)).as("delayError").isTrue();
+		assertThat(s.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 	}
 
 	@Test
@@ -524,16 +526,17 @@ public class MonoZipTest {
 		MonoZip.ZipCoordinator<String> test = new MonoZip.ZipCoordinator<>(
 				actual, 2, true, a -> String.valueOf(a[0]));
 
-		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(2);
-		assertThat(test.scan(Scannable.Attr.DELAY_ERROR)).isTrue();
+		assertThat(test.scan(Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Attr.BUFFERED)).isEqualTo(2);
+		assertThat(test.scan(Attr.DELAY_ERROR)).isTrue();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(actual);
 
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
 		test.cancel();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 	}
 
 	@Test
@@ -548,7 +551,7 @@ public class MonoZipTest {
 		test.onError(new IllegalStateException("boom"));
 
 		assertThat(parent.done).isEqualTo(2);
-		assertThat(parent.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(parent.scan(Attr.TERMINATED)).isTrue();
 	}
 
 	@Test
@@ -558,10 +561,10 @@ public class MonoZipTest {
 				actual, 10, true, a -> String.valueOf(a[0]));
 
 		test.done = 9;
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
 
 		test.done = 10;
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
 	}
 
 	@Test
@@ -574,14 +577,14 @@ public class MonoZipTest {
 		Subscription innerSub = Operators.cancelledSubscription();
 		test.onSubscribe(innerSub);
 
-		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(innerSub);
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(coordinator);
-		assertThat(coordinator.scan(Scannable.Attr.TERMINATED)).isFalse(); //done == 1
+		assertThat(test.scan(Attr.PARENT)).isSameAs(innerSub);
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(coordinator);
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
+		assertThat(coordinator.scan(Attr.TERMINATED)).isFalse(); //done == 1
 		test.onError(new IllegalStateException("boom"));
-		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-		assertThat(coordinator.scan(Scannable.Attr.TERMINATED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-
+		assertThat(test.scan(Attr.ERROR)).hasMessage("boom");
+		assertThat(coordinator.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 	}
 
 	@Test

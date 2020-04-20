@@ -18,9 +18,9 @@ package reactor.core.publisher;
 
 import org.junit.Test;
 import org.reactivestreams.Subscription;
-import reactor.core.Scannable;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.core.Scannable.*;
 
 public class BlockingSingleSubscriberTest {
 
@@ -41,33 +41,34 @@ public class BlockingSingleSubscriberTest {
 		Subscription s = Operators.emptySubscription();
 		test.onSubscribe(s);
 
-		assertThat(test.scan(Scannable.Attr.PARENT)).describedAs("PARENT").isSameAs(s);
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).describedAs("TERMINATED").isFalse();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).describedAs("CANCELLED").isFalse();
-		assertThat(test.scan(Scannable.Attr.ERROR)).describedAs("ERROR").isNull();
-		assertThat(test.scan(Scannable.Attr.PREFETCH)).describedAs("PREFETCH").isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Attr.PARENT)).describedAs("PARENT").isSameAs(s);
+		assertThat(test.scan(Attr.TERMINATED)).describedAs("TERMINATED").isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).describedAs("CANCELLED").isFalse();
+		assertThat(test.scan(Attr.ERROR)).describedAs("ERROR").isNull();
+		assertThat(test.scan(Attr.PREFETCH)).describedAs("PREFETCH").isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 	}
 
 	@Test
 	public void scanMainTerminated() {
 		test.onComplete();
 
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
 	}
 
 	@Test
 	public void scanMainError() {
 		test.onError(new IllegalStateException("boom"));
 
-		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.ERROR)).hasMessage("boom");
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
 	}
 
 	@Test
 	public void scanMainCancelled() {
 		test.dispose();
 
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
 	}
 }

@@ -32,6 +32,7 @@ import reactor.test.subscriber.AssertSubscriber;
 import reactor.test.util.RaceTestUtils;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static reactor.core.Scannable.*;
 
 public class MonoCreateTest {
 
@@ -316,16 +317,26 @@ public class MonoCreateTest {
 	}
 
 	@Test
+	public void scanMonoCreate() {
+		Mono<String> test = Mono.create(sink -> sink.success("foo"));
+
+		assertThat(from(test).scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
+		assertThat(from(test).scan(Attr.ACTUAL)).isNull();
+	}
+
+	@Test
 	public void scanDefaultMonoSink() {
 		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
 		MonoCreate.DefaultMonoSink<String> test = new MonoCreate.DefaultMonoSink<>(actual);
 
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(actual);
 
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 		test.success();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 	}
 
 	@Test
@@ -333,11 +344,13 @@ public class MonoCreateTest {
 		CoreSubscriber<String> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
 		MonoCreate.DefaultMonoSink<String> test = new MonoCreate.DefaultMonoSink<>(actual);
 
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 		test.cancel();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 	}
 
 	@Test

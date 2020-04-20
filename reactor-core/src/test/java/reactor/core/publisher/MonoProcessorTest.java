@@ -35,6 +35,7 @@ import reactor.util.function.Tuple2;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static reactor.core.Scannable.*;
 
 public class MonoProcessorTest {
 
@@ -514,13 +515,15 @@ public class MonoProcessorTest {
 		Subscription subscription = Operators.emptySubscription();
 		test.onSubscribe(subscription);
 
-		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
+		assertThat(test.scan(Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
 
 		test.onComplete();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
 	}
 
 	@Test
@@ -529,13 +532,14 @@ public class MonoProcessorTest {
 		Subscription subscription = Operators.emptySubscription();
 		test.onSubscribe(subscription);
 
-		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
+		assertThat(test.scan(Attr.PREFETCH)).isEqualTo(Integer.MAX_VALUE);
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
 
 		test.cancel();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 	}
 
 	@Test
@@ -544,8 +548,8 @@ public class MonoProcessorTest {
 		Subscription subscription = Operators.emptySubscription();
 		test.onSubscribe(subscription);
 
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isNull();
-		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(subscription);
+		assertThat(test.scan(Attr.ACTUAL)).isNull();
+		assertThat(test.scan(Attr.PARENT)).isSameAs(subscription);
 	}
 
 	@Test
@@ -556,8 +560,8 @@ public class MonoProcessorTest {
 
 		test.onError(new IllegalStateException("boom"));
 
-		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.ERROR)).hasMessage("boom");
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
 	}
 
 	@Test

@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Test;
 import reactor.core.CoreSubscriber;
 import reactor.core.Exceptions;
-import reactor.core.Scannable;
 import reactor.core.scheduler.Schedulers;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.core.Scannable.*;
 
 public class MonoDelayTest {
 
@@ -75,7 +75,8 @@ public class MonoDelayTest {
 	public void scanOperator() {
 		MonoDelay test = new MonoDelay(1, TimeUnit.SECONDS, Schedulers.immediate());
 
-		assertThat(test.scan(Scannable.Attr.RUN_ON)).isSameAs(Schedulers.immediate());
+		assertThat(test.scan(Attr.RUN_ON)).isSameAs(Schedulers.immediate());
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.ASYNC);
 	}
 
 	@Test
@@ -86,14 +87,15 @@ public class MonoDelayTest {
 
 		actual.onSubscribe(test);
 
-		assertThat(test.scan(Scannable.Attr.PARENT)).isNull();
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Attr.PARENT)).isNull();
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.ASYNC);
 
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
 		test.request(1);
 		test.run();
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
 	}
 
 	@Test
@@ -101,8 +103,8 @@ public class MonoDelayTest {
 		CoreSubscriber<Long> actual = new LambdaMonoSubscriber<>(null, e -> {}, null, null);
 		MonoDelay.MonoDelayRunnable test = new MonoDelay.MonoDelayRunnable(actual);
 
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
 		test.cancel();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 	}
 }

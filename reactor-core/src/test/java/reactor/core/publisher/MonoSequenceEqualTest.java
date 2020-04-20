@@ -33,6 +33,7 @@ import reactor.test.StepVerifier;
 import reactor.util.concurrent.Queues;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static reactor.core.Scannable.*;
 
 public class MonoSequenceEqualTest {
 
@@ -269,7 +270,8 @@ public class MonoSequenceEqualTest {
 	@Test
 	public void scanOperator() {
 		MonoSequenceEqual<Integer> s = new MonoSequenceEqual<>(Mono.just(1), Mono.just(2), (a, b) -> true, 123);
-		assertThat(s.scan(Scannable.Attr.PREFETCH)).isEqualTo(123);
+		assertThat(s.scan(Attr.PREFETCH)).isEqualTo(123);
+		assertThat(s.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 	}
 
 	@Test
@@ -281,11 +283,12 @@ public class MonoSequenceEqualTest {
 						Mono.just("bar"),
 						(s1, s2) -> s1.equals(s2));
 
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(actual);
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(actual);
+		assertThat(test.scan(Attr.CANCELLED)).isFalse();
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 
 		test.cancel();
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 	}
 
 	@Test
@@ -304,17 +307,18 @@ public class MonoSequenceEqualTest {
 		Subscription sub = Operators.cancelledSubscription();
 		test.onSubscribe(sub);
 
-		assertThat(test.scan(Scannable.Attr.PREFETCH)).isEqualTo(456);
-		assertThat(test.scan(Scannable.Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Attr.PREFETCH)).isEqualTo(456);
+		assertThat(test.scan(Attr.BUFFERED)).isEqualTo(1);
+		assertThat(test.scan(Attr.RUN_STYLE)).isEqualTo(Attr.RunStyle.SYNC);
 
-		assertThat(test.scan(Scannable.Attr.ACTUAL)).isSameAs(coordinator);
-		assertThat(test.scan(Scannable.Attr.PARENT)).isSameAs(sub);
-		assertThat(test.scan(Scannable.Attr.CANCELLED)).isTrue();
+		assertThat(test.scan(Attr.ACTUAL)).isSameAs(coordinator);
+		assertThat(test.scan(Attr.PARENT)).isSameAs(sub);
+		assertThat(test.scan(Attr.CANCELLED)).isTrue();
 
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isFalse();
+		assertThat(test.scan(Attr.TERMINATED)).isFalse();
 		test.onError(new IllegalStateException("boom"));
-		assertThat(test.scan(Scannable.Attr.TERMINATED)).isTrue();
-		assertThat(test.scan(Scannable.Attr.ERROR)).hasMessage("boom");
+		assertThat(test.scan(Attr.TERMINATED)).isTrue();
+		assertThat(test.scan(Attr.ERROR)).hasMessage("boom");
 	}
 
 	//TODO multithreaded race between cancel and onNext, between cancel and drain, source overflow, error dropping to hook
